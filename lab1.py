@@ -1,31 +1,23 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from DataGenerator import DataGenerator, Packet, Event
+from DiscreteEventSimulator import DiscreteEventSimulator
+import time
 
-AVERAGE_BIT_LENGTH = 2000
-TRANSMISSION_RATE = 1000000
-NUM_OF_PACKETS = 1000
+question_number = raw_input("Enter Question Number ")
+question_number = int(question_number)
 
-ARRIVAL_TIME_LAMBDA = 75
-BIT_LENGTH_LAMBDA = 1/AVERAGE_BIT_LENGTH
+start_time = time.time()
+if question_number == 3:
+    rho_values = np.arange(0.25, 1.05, 0.1)
+    for rho in rho_values:
+        print(" --- Rho Value: %s --- " % rho)
+        # Run simulator Passing in events and packets
+        simulator = DiscreteEventSimulator(rho).run()
 
-arrivalTimes = DataGenerator(lmbda=ARRIVAL_TIME_LAMBDA, NUM_OF_PACKETS)
-bitLengths = DataGenerator(lmbda=BIT_LENGTH_LAMBDA, NUM_OF_PACKETS)
+elif question_number == 4:
+    # Run simulator Passing in events and packets
+    rho = 1.2
+    print(" --- Rho Value: %s --- " % rho)
+    simulator = DiscreteEventSimulator(rho).run()
 
-packets = []
-events = []
-
-# Arrival Time
-for i in range(NUM_OF_PACKETS):
-    events.append(Event("ARRIVAL", arrivalTimes[i]))
-
-# Departure Time
-prevDepartureTime = 0
-for i in range(NUM_OF_PACKETS):
-    
-    departureTime = prevDepartureTime + packets[i].getServiceTime(1000000)
-    
-
-
-observation = DataGenerator(lmbda=75*5)
-arrival.run()
+print("--- %s seconds ---" % (time.time() - start_time))
+# DES for M/M/1/K
