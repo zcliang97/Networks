@@ -7,27 +7,26 @@ SIMULATION_TIME = 1000
 TRANSMISSION_RATE = 1000000 # 1 Mbps
 
 class DiscreteEventBufferSimulator:
-    buffer = []
-
-    # Counters for metrics
-    arrival_count = 0
-    departure_count = 0
-    observer_count = 0
-    idle_count = 0
-    packet_sum = 0
-    packet_loss_count = 0
-
-    # Metrics
-    proportion_idle = 0
-    packet_loss = 0
-    average_packets_in_queue = 0
-    
     def __init__(self, rho, buffer_length):
         self.events = []
         self.departures = []
         self.packets = []
+        self.buffer = []
         self.rho = rho
         self.buffer_length = buffer_length
+
+        # Counters for metrics
+        self.arrival_count = 0
+        self.departure_count = 0
+        self.observer_count = 0
+        self.idle_count = 0
+        self.packet_sum = 0
+        self.packet_loss_count = 0
+
+        # Metrics
+        self.proportion_idle = 0
+        self.packet_loss = 0
+        self.average_packets_in_queue = 0
 
     def run(self):
         self.genEventsAndPackets()
