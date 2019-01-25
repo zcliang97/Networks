@@ -1,3 +1,4 @@
+from __future__ import division
 from Event import Event
 from ExponentialRandomVariableGenerator import ExponentialRandomVariableGenerator
 from Packet import Packet
@@ -50,7 +51,6 @@ class DiscreteEventBufferSimulator:
         while currentTime < SIMULATION_TIME:
             # Add inter-arrival time to arrive at current timestamp
             interArrivalTime = arrivalTimeGenerator.genValue()
-
             currentTime += interArrivalTime
 
             # Generate packet and its length
@@ -63,18 +63,17 @@ class DiscreteEventBufferSimulator:
         while currentTime < SIMULATION_TIME:
             interArrivalTime = observationTimeGenerator.genValue()
             currentTime += interArrivalTime
-            if (currentTime < SIMULATION_TIME):
-                self.events.append(Event("Observer", currentTime))
+            self.events.append(Event("Observer", currentTime))
 
         # Sort Events
-        self.events.sort(key=lambda event: event.timestamp)
+        self.events.sort(key=lambda event: -event.timestamp)
 
     def processEvents(self):
-        while len(self.events) > 0 or len(self.departures) > 0:
-            if len(self.departures) > 0 and self.events[0].timestamp >= self.departures[0].timestamp:
+        while self.events or self.departures:
+            if not self.events or (self.departures and self.events[-1].timestamp >= self.departures[0].timestamp):
                 event = self.departures.pop(0)
             else:
-                event = self.events.pop(0)
+                event = self.events.pop()
 
             if event.event_type == "Arrival":
                 self.processArrival(event.timestamp)
@@ -86,6 +85,7 @@ class DiscreteEventBufferSimulator:
 
     def processArrival(self, timestamp):
         packet = self.packets.pop(0)
+        self.arrival_count += 1
         if len(self.buffer) < self.buffer_length:
             # Generate its departure time based on queue status
             transmissionTime = packet.getTransmissionTime()
@@ -93,12 +93,9 @@ class DiscreteEventBufferSimulator:
                 departureTime = self.prevDepartureTime + transmissionTime
             else:
                 departureTime = timestamp + transmissionTime
-            
-            if (departureTime < SIMULATION_TIME):
-                self.departures.append(Event("Departure", departureTime))
+            self.departures.append(Event("Departure", departureTime))
 
             self.buffer.append(packet)
-            self.arrival_count += 1
         else:
             self.packet_loss_count += 1
 
@@ -108,13 +105,14 @@ class DiscreteEventBufferSimulator:
 
     def processObserver(self):
         self.observer_count += 1
-        if len(self.buffer) <= 0:
+        if not self.buffer:
             self.idle_count += 1
-
+        
         self.packet_sum += len(self.buffer)
-        self.average_packets_in_queue = float(self.packet_sum) / self.observer_count
-        self.proportion_idle = float(self.idle_count) / self.observer_count
-        self.packet_loss = float(self.packet_loss_count) / self.observer_count
+        self.average_packets_in_queue = self.packet_sum / self.observer_count
+        print self.average_packets_in_queue
+        self.proportion_idle = self.idle_count / self.observer_count
+        self.packet_loss = self.packet_loss_count / (1 + self.arrival_count)
 
     def printResults(self):
         print("Counts", self.arrival_count, self.departure_count, self.observer_count)

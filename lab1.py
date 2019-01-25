@@ -4,10 +4,10 @@ from DiscreteEventBufferSimulator import DiscreteEventBufferSimulator
 import time
 import matplotlib.pyplot as plt
 
-def generateGraph(self, lines):
+def generateGraph(lines):
     for (x, y) in lines:
         plt.plot(x, y)
-    plt.show
+    plt.show()
 
 def question_3():
     rho_values = np.arange(0.25, 1.05, 0.1)
@@ -25,12 +25,13 @@ def question_4():
 def question_6():
     lines = []
     buffer_lengths = [10, 25, 50]
-    rho_values = np.arange(0.5, 1.6, 0.1)
+    rho_values = np.arange(1.4, 1.6, 0.1)
     for length in buffer_lengths:
         x, y = [], []
         for rho in rho_values:
             print " --- Buffer Length: {length}, Rho Value: {rho} --- ".format(length=length, rho=rho)
             avgPacketsInQueue = DiscreteEventBufferSimulator(rho, length).run()
+            print("--- %s seconds to run range ---" % (time.time() - start_time))
             x.append(rho)
             y.append(avgPacketsInQueue)
         lines.append((x, y))
