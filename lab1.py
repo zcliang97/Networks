@@ -2,11 +2,13 @@ import numpy as np
 from DiscreteEventSimulator import DiscreteEventSimulator
 from DiscreteEventBufferSimulator import DiscreteEventBufferSimulator
 import time
+import matplotlib.pyplot as plt
 
-question_number = raw_input("Enter Question Number ")
-question_number = int(question_number)
+def generateGraph(self, lines):
+    for (x, y) in lines:
+        plt.plot(x, y)
+    plt.show
 
-start_time = time.time()
 def question_3():
     rho_values = np.arange(0.25, 1.05, 0.1)
     for rho in rho_values:
@@ -21,12 +23,25 @@ def question_4():
     simulator = DiscreteEventSimulator(rho).run()
 
 def question_6():
+    lines = []
     buffer_lengths = [10, 25, 50]
     rho_values = np.arange(0.5, 1.6, 0.1)
     for length in buffer_lengths:
+        x, y = [], []
         for rho in rho_values:
             print " --- Buffer Length: {length}, Rho Value: {rho} --- ".format(length=length, rho=rho)
-            simulator = DiscreteEventBufferSimulator(rho, length).run()
+            avgPacketsInQueue = DiscreteEventBufferSimulator(rho, length).run()
+            x.append(rho)
+            y.append(avgPacketsInQueue)
+        lines.append((x, y))
+    print lines
+    self.generateGraph(lines)
+
+# main
+question_number = raw_input("Enter Question Number [3, 4, 6] ")
+question_number = int(question_number)
+
+start_time = time.time()
 
 if question_number == 3:
     question_3()
