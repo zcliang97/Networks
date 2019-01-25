@@ -1,3 +1,4 @@
+from __future__ import division
 from Event import Event
 from ExponentialRandomVariableGenerator import ExponentialRandomVariableGenerator
 from Packet import Packet
