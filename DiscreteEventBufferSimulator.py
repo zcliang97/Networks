@@ -119,3 +119,4 @@ class DiscreteEventBufferSimulator:
         print("Average Packets In Queue ", self.average_packets_in_queue)
         print("Idle Proportion ", self.proportion_idle)
         print("Probability of Packet Loss ", self.packet_loss)
+        
