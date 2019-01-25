@@ -1,4 +1,5 @@
 from __future__ import division
+from collections import deque
 from Event import Event
 from ExponentialRandomVariableGenerator import ExponentialRandomVariableGenerator
 from Packet import Packet
@@ -10,9 +11,9 @@ TRANSMISSION_RATE = 1000000 # 1 Mbps
 class DiscreteEventBufferSimulator:
     def __init__(self, rho, buffer_length):
         self.events = []
-        self.departures = []
-        self.packets = []
-        self.buffer = []
+        self.departures = deque() 
+        self.packets = deque()
+        self.buffer = deque()
         self.rho = rho
         self.buffer_length = buffer_length
 
@@ -34,7 +35,6 @@ class DiscreteEventBufferSimulator:
         self.genEventsAndPackets()
         self.processEvents()
         self.printResults()
-        return self.average_packets_in_queue
 
     def genEventsAndPackets(self):
         arrival_time_lambda = self.rho * TRANSMISSION_RATE / AVERAGE_PACKET_LENGTH
@@ -66,25 +66,30 @@ class DiscreteEventBufferSimulator:
             self.events.append(Event("Observer", currentTime))
 
         # Sort Events
-        self.events.sort(key=lambda event: -event.timestamp)
+        self.events.sort(key=lambda event: event.timestamp)
+        self.events = deque(self.events)
 
     def processEvents(self):
         while self.events or self.departures:
-            if not self.events or (self.departures and self.events[-1].timestamp >= self.departures[0].timestamp):
-                event = self.departures.pop(0)
+            if self.departures:
+                eventsTime = self.events[0].timestamp
+                departureTime = self.departures[0].timestamp
+                if eventsTime > departureTime:
+                    event = self.departures.popleft()
+                else:
+                    event = self.events.popleft()
             else:
-                event = self.events.pop()
+                event = self.events.popleft()
 
             if event.event_type == "Arrival":
                 self.processArrival(event.timestamp)
             elif event.event_type == "Departure":
                 self.processDeparture()
-                self.prevDepartureTime = event.timestamp
             elif event.event_type == "Observer":
                 self.processObserver()
 
     def processArrival(self, timestamp):
-        packet = self.packets.pop(0)
+        packet = self.packets.popleft()
         self.arrival_count += 1
         if len(self.buffer) < self.buffer_length:
             # Generate its departure time based on queue status
@@ -93,14 +98,17 @@ class DiscreteEventBufferSimulator:
                 departureTime = self.prevDepartureTime + transmissionTime
             else:
                 departureTime = timestamp + transmissionTime
-            self.departures.append(Event("Departure", departureTime))
+
+            if departureTime < SIMULATION_TIME:
+                self.prevDepartureTime = departureTime
+                self.departures.append(Event("Departure", departureTime))
 
             self.buffer.append(packet)
         else:
             self.packet_loss_count += 1
 
     def processDeparture(self):
-        self.buffer.pop(0)
+        self.buffer.popleft()
         self.departure_count += 1
 
     def processObserver(self):
@@ -108,9 +116,9 @@ class DiscreteEventBufferSimulator:
         if not self.buffer:
             self.idle_count += 1
         
-        self.packet_sum += len(self.buffer)
+        buffer_size = len(self.buffer)
+        self.packet_sum += buffer_size
         self.average_packets_in_queue = self.packet_sum / self.observer_count
-        print self.average_packets_in_queue
         self.proportion_idle = self.idle_count / self.observer_count
         self.packet_loss = self.packet_loss_count / (1 + self.arrival_count)
 
@@ -119,4 +127,3 @@ class DiscreteEventBufferSimulator:
         print("Average Packets In Queue ", self.average_packets_in_queue)
         print("Idle Proportion ", self.proportion_idle)
         print("Probability of Packet Loss ", self.packet_loss)
-        
