@@ -25,7 +25,7 @@ def question_4():
 def question_6():
     lines = []
     buffer_lengths = [10, 25, 50]
-    rho_values = np.arange(1.4, 1.6, 0.1)
+    rho_values = np.arange(0.5, 1.6, 0.1)
     for length in buffer_lengths:
         x, y = [], []
         for rho in rho_values:
@@ -36,7 +36,7 @@ def question_6():
             y.append(avgPacketsInQueue)
         lines.append((x, y))
     print lines
-    self.generateGraph(lines)
+    generateGraph(lines)
 
 # main
 question_number = raw_input("Enter Question Number [3, 4, 6] ")
@@ -50,5 +50,3 @@ elif question_number == 4:
     question_4()
 elif question_number == 6:
     question_6()
-
-print("--- %s seconds to run range ---" % (time.time() - start_time))
