@@ -35,7 +35,7 @@ class DiscreteEventBufferSimulator:
         self.genEventsAndPackets()
         self.processEvents()
         self.printResults()
-        return self.average_packets_in_queue
+        return self.average_packets_in_queue, self.packet_loss
 
     def genEventsAndPackets(self):
         arrival_time_lambda = self.rho * TRANSMISSION_RATE / AVERAGE_PACKET_LENGTH
