@@ -32,6 +32,7 @@ class DiscreteEventSimulator:
         self.printResults()
 
     def genEventsAndPackets(self):
+
         arrival_time_lambda = self.rho * TRANSMISSION_RATE / AVERAGE_PACKET_LENGTH
         packet_length_lambda = 1.0 / AVERAGE_PACKET_LENGTH
         observer_time_lambda = 5 * arrival_time_lambda
@@ -42,7 +43,7 @@ class DiscreteEventSimulator:
         observationTimeGenerator = ExponentialRandomVariableGenerator(lmbda=observer_time_lambda)
 
         currentTime = 0
-        prevDepartureTime = 0
+        prevCalculatedDepartureTime = 0
         # Generate Arrival, and if M/M/1, generate Departure
         while currentTime < SIMULATION_TIME:
             # Add inter-arrival time to arrive at current timestamp
@@ -55,8 +56,8 @@ class DiscreteEventSimulator:
             # Generate its departure time based on queue status
             departureTime = 0
             transmissionTime = packet.getTransmissionTime()
-            if currentTime < prevDepartureTime:
-                departureTime = prevDepartureTime + transmissionTime
+            if currentTime < prevCalculatedDepartureTime:
+                departureTime = prevCalculatedDepartureTime + transmissionTime
             else:
                 departureTime = currentTime + transmissionTime
             
@@ -66,7 +67,7 @@ class DiscreteEventSimulator:
                 self.events.append(Event("Arrival", currentTime))
                 self.events.append(Event("Departure", departureTime))
             
-            prevDepartureTime = departureTime
+            prevCalculatedDepartureTime = departureTime
 
         # Generate Observer Events
         currentTime = 0
@@ -76,9 +77,8 @@ class DiscreteEventSimulator:
             if (currentTime < SIMULATION_TIME):
                 self.events.append(Event("Observer", currentTime))
 
-        # Sort Events
+        # Sort Events for processing chronologically
         self.events.sort(key=lambda event: event.timestamp)
-
 
     def processEvents(self):
         for event in self.events:
@@ -90,29 +90,34 @@ class DiscreteEventSimulator:
                 self.processObserver()
 
     def processArrival(self):
+        # Send in the next packet into the queue
         packet = self.packets.pop(0)
         self.queue.append(packet)
         self.arrival_count += 1
 
     def processDeparture(self):
+        # Remove packet in front of the queue
         self.queue.pop(0)
         self.departure_count += 1
 
     def processObserver(self):
         self.observer_count += 1
-        if len(self.queue) <= 0:
+        # If Queue is empty
+        if not self.queue:
             self.idle_count += 1
 
+        # Packet sum is the sum of the number of packets viewed by each observer
         self.packet_sum += len(self.queue)
         self.average_packets_in_queue = self.packet_sum / self.observer_count
         self.proportion_idle = self.idle_count / self.observer_count
+
+    def getAveragePacketsInQueue(self):
+        return self.average_packets_in_queue
+
+    def getIdleProportion(self):
+        return self.proportion_idle
 
     def printResults(self):
         print("Counts", self.arrival_count, self.departure_count, self.observer_count)
         print("Average Packets In Queue ", self.average_packets_in_queue)
         print("Idle Proportion ", self.proportion_idle)
-
-
-
-
-

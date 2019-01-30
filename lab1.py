@@ -35,14 +35,22 @@ def question_1():
     print("Experimental Variance: %f" % experimental_variance)
 
 def question_3():
+    # 0.25 with 0.1 steps up to a max value of 1.05 => 0.25 to 0.95
     rho_values = np.arange(0.25, 1.05, 0.1)
+    average_packet = []
+    idle_proportions = []
+    # Run simulator passing in varied rho
     for rho in rho_values:
         print(" --- Rho Value: %s --- " % rho)
-        # Run simulator Passing in events and packets
-        simulator = DiscreteEventSimulator(rho).run()
+        simulator = DiscreteEventSimulator(rho)
+        simulator.run()
+        average_packet.append(simulator.getAveragePacketsInQueue())
+        idle_proportions.append(simulator.getIdleProportion())
+
+    print("E[N] Values: ", average_packet)
+    print("Pidle Values: ", idle_proportions)
 
 def question_4():
-    # Run simulator Passing in events and packets
     rho = 1.2
     print(" --- Rho Value: %s --- " % rho)
     simulator = DiscreteEventSimulator(rho).run()
