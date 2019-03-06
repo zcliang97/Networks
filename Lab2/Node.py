@@ -32,7 +32,7 @@ class Node:
 
     # update all arrival times less than new timestamp to be the new timestamp
     def collisionDetection(self, firstBitArrivalTime):
-        if self.queue[0].timestamp < firstBitArrivalTime:
+        if self.queue and self.queue[0].timestamp < firstBitArrivalTime:
             # collision occurred
             if self.collision_counter > 10:
                 self.queue.pop(0)

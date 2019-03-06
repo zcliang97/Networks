@@ -5,11 +5,12 @@ from DiscreteEventSimulator import DiscreteEventSimulator
 from ExponentialRandomVariableGenerator import ExponentialRandomVariableGenerator
 
 def question_1():
-    simulator = DiscreteEventSimulator(3, 1.0).run()
+    for A in [7, 10, 20]:
+        for N in [20, 40, 60, 80, 100]:
+            simulator = DiscreteEventSimulator(A, N).run()
 
 def question_2():
-    rho = 1.2
-    simulator = DiscreteEventSimulator(rho).run()
+    simulator = DiscreteEventSimulator(4, 1.0).run()
 
 # main
 question_number = raw_input("Enter Question Number [1, 2] ")
