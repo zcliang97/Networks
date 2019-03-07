@@ -2,9 +2,10 @@ from __future__ import division
 from Node import Node
 
 SIMULATION_TIME = 1000
+
 TRANSMISSION_RATE = 1000000 # 1 Mbps
 AVERAGE_PACKET_LENGTH = 1500 # assume all packets are the same length
-TRANSMISSION_DELAY = 1.0 / AVERAGE_PACKET_LENGTH
+TRANSMISSION_DELAY = AVERAGE_PACKET_LENGTH / TRANSMISSION_RATE
 
 DISTANCE_BETWEEN_NODES = 10.0
 PROPAGATION_SPEED = (2/3) * 300000000
@@ -29,39 +30,60 @@ class DiscreteEventSimulator:
 
     def createNodes(self):
         for i in range(self.numNodes):
-            # lambda is the mean for a Poisson distribution
-            # so to get avgPacketArrivalRate lambda, we have to multiply lambda by the avgPacketArrivalRate
-            arrivalTimeLambda = self.avgPacketArrivalRate * TRANSMISSION_RATE / AVERAGE_PACKET_LENGTH
-            self.nodes.append(Node(arrivalTimeLambda, SIMULATION_TIME))
+            self.nodes.append(Node(i, self.avgPacketArrivalRate, SIMULATION_TIME))
+
+    def applyCarrierSensing(self, currentTime, txNode):
+        # Include transmitting node so that it's next packet also views bus as busy
+        for node in self.nodes:
+            offset = abs(node.getNodePosition() - txNode.getNodePosition())
+
+            propagationDelay = offset * UNIT_PROPAGATION_DELAY;
+            firstBitArrivalTime = currentTime + propagationDelay
+            lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
+            node.processNoCollision(firstBitArrivalTime, lastBitArrivalTime)
 
     def processEvents(self):
         currentTime = 0
         while currentTime < SIMULATION_TIME:
-            # get the index of the node with the smallest packet arrival time
-            firstEvent = {}
-            for i, node in enumerate(self.nodes):
-                if node.queue: firstEvent[node.queue[0].timestamp] = i
-            if firstEvent: sender_index = firstEvent[min(firstEvent)]
-            else: return
+            # get the sender node which has the smallest packet arrival time
+            txNode = min(self.nodes, key=lambda node: node.getFirstPacketTimestamp())
 
             # update the currentTime
-            currentTime = self.nodes[sender_index].queue[0].timestamp
+            currentTime = txNode.getFirstPacketTimestamp()
 
-            # process arrival
-            self.nodes[sender_index].processArrival()
+            # Sender tries to send packet
+            self.transmittedPackets += 1
 
-            # broadcast arrival event
-            for i, node in enumerate(self.nodes):
-                firstBitArrivalTime = currentTime + (UNIT_PROPAGATION_DELAY * abs(i - sender_index))
-                lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
-                if node.broadcast(firstBitArrivalTime, lastBitArrivalTime):
+            # For each node, calculate when the packet arrives + check collision
+            transferSuccessful = True
+            firstCollisionTime = float('inf')
+            collisionInvolvedNodes = []
+            for rxNode in self.nodes:
+                offset = abs(rxNode.getNodePosition() - txNode.getNodePosition())
+                if (offset == 0):
+                    continue;
+                
+                propagationDelay = offset * UNIT_PROPAGATION_DELAY;
+                firstBitArrivalTime = currentTime + propagationDelay
+
+                collisionDetected = rxNode.checkCollision(firstBitArrivalTime)
+                if collisionDetected:
+                    firstCollisionTime = min(firstCollisionTime, firstBitArrivalTime)
+                    collisionInvolvedNodes.append(rxNode)
+
+            if collisionInvolvedNodes:
+                txNode.waitExponentialBackoff(firstCollisionTime)
+                for node in collisionInvolvedNodes:
                     self.transmittedPackets += 1
-                else:
-                    self.transmittedPackets += 1
-                    self.successfullyTransmittedPackets += 1
+                    node.waitExponentialBackoff(firstCollisionTime)
+            else:
+                self.successfullyTransmittedPackets += 1
+                txNode.removeFirstPacket()
+                self.applyCarrierSensing(currentTime, txNode)
 
     def printResults(self):
-        print "================ RESULTS ================"
-        print "SuccessFully Transmitted Packets: {}".format(self.successfullyTransmittedPackets)
-        print "Total Transmitted Packets: {}".format(self.transmittedPackets)
-        print "Efficiency of CSMA/CD: {}".format((self.successfullyTransmittedPackets / self.transmittedPackets))
+        print("================ RESULTS ================")
+        print("Arrival Rate: %f, NumNodes: %f", self.avgPacketArrivalRate, self.numNodes)
+        print("SuccessFully Transmitted Packets: {}".format(self.successfullyTransmittedPackets))
+        print("Total Transmitted Packets: {}".format(self.transmittedPackets))
+        print("Efficiency of CSMA/CD: {}".format((self.successfullyTransmittedPackets / self.transmittedPackets)))

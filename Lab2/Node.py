@@ -1,13 +1,16 @@
 from ExponentialRandomVariableGenerator import ExponentialRandomVariableGenerator
 from Packet import Packet
 from Event import Event
+from collections import deque
 import random
 
+COLLISION_LIMIT = 10
 TRANSMISSION_RATE = 1000000 # 1 Mbps
 
 class Node:
-    def __init__(self, arrivalTimeLambda, simulationTime):
-        self.queue = []
+    def __init__(self, position, arrivalTimeLambda, simulationTime):
+        self.queue = deque()
+        self.position = position
         self.arrivalTimeLambda = arrivalTimeLambda
         self.simulationTime = simulationTime
         self.collision_counter = 0
@@ -26,41 +29,55 @@ class Node:
 
             # add arrival event to queue
             self.queue.append(Event("Arrival", currentTime))
-        
-        # Sort Events for processing chronologically
-        self.queue.sort(key=lambda event: event.timestamp)
 
-    # update all arrival times less than new timestamp to be the new timestamp
-    def collisionDetection(self, firstBitArrivalTime):
-        if self.queue and self.queue[0].timestamp < firstBitArrivalTime:
-            # collision occurred
-            if self.collision_counter > 10:
-                self.queue.pop(0)
-                self.collision_counter = 0
+    def checkCollision(self, firstBitArrivalTime):
+        if self.queue and (self.queue[0].timestamp < firstBitArrivalTime):
+            return True
+        return False
+
+    def waitExponentialBackoff(self, collisionTime):
+        if not self.queue:
+            return
+
+        self.collision_counter += 1
+        if self.collision_counter > COLLISION_LIMIT:
+            # print("Collision Counter exceeded Limit")
+            self.removeFirstPacket()
+        else: 
+            # Start backoff when collision occurs. Collison occurs when first bit arrives
+            # and all nodes are notified at the same time
+            newArrivalTime = collisionTime + self.genExponentialBackoffTime()
+            for packet in self.queue:
+                if packet.timestamp > newArrivalTime:
+                    break
+                elif packet.timestamp <= newArrivalTime: 
+                    packet.timestamp = newArrivalTime
+
+    def processNoCollision(self, firstBitArrivalTime, lastBitArrivalTime):
+        for packet in self.queue:
+            if packet.timestamp > lastBitArrivalTime:
+                break
+            elif packet.timestamp < firstBitArrivalTime:
+                raise Exception('There should not be any prev transmitted nodes when no collisons occur')
             else:
-                self.collision_counter += 1
-                waitingTime = self.exponentialBackoffTime()
-                self.updateTimestamps(waitingTime)
-            return True
-        else: return False
-    
-    def broadcast(self, firstBitArrivalTime, lastBitArrivalTime):
-        if self.collisionDetection(firstBitArrivalTime):
-            return True
-        else:
-            self.updateTimestamps(lastBitArrivalTime)
-            return False
+                packet.timestamp = lastBitArrivalTime
 
-    def updateTimestamps(self, timestamp):
-        for event in self.queue:
-            if event.timestamp < timestamp: event.timestamp = timestamp
-            elif event.timestamp >= timestamp: break
-
-    def exponentialBackoffTime(self):
-        R = random.randint(0, 2**self.collision_counter)    # generate a random number between 0 and 2^i-1
-        backoff = R * 512 * (1 / TRANSMISSION_RATE)       # random number * 512 bit-time
+    def genExponentialBackoffTime(self):
+        # generate a random number between 0 and 2^i-1
+        R = random.randint(0, 2**self.collision_counter)
+        # random number * 512 bit-time
+        backoff = R * 512 * (1 / TRANSMISSION_RATE)
         return backoff
 
-    def processArrival(self):
-        event = self.queue.pop(0)
-        self.collision_counter = 0
+    def removeFirstPacket(self):
+        self.queue.popleft()
+        self.collision_counter = 0;
+
+    def getFirstPacketTimestamp(self):
+        if self.queue:
+            return self.queue[0].timestamp
+        else:
+            return float('inf')
+
+    def getNodePosition(self):
+        return self.position
