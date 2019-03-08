@@ -76,7 +76,7 @@ class PersistentCSMASimulator:
             else:
                 self.successfullyTransmittedPackets += 1
                 txNode.removeFirstPacket()
-                self.bufferAllPacketsForBusy()
+                self.bufferAllPacketsForBusy(currentTime, txNode)
 
     def printResults(self):
         print("================ RESULTS ================")
