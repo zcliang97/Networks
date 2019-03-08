@@ -33,7 +33,7 @@ class PersistentCSMASimulator:
 
     def bufferAllPacketsForBusy(self, currentTime, txNode):
         for node in self.nodes:
-            offset = abs(rxNode.getNodePosition() - txNode.getNodePosition())
+            offset = abs(node.getNodePosition() - txNode.getNodePosition())
             propagationDelay = offset * UNIT_PROPAGATION_DELAY;
             firstBitArrivalTime = currentTime + propagationDelay
             lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
