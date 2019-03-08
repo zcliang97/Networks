@@ -14,6 +14,7 @@ class Node:
         self.arrivalTimeLambda = arrivalTimeLambda
         self.simulationTime = simulationTime
         self.collision_counter = 0
+        self.collision_counter_medium = 0
         self.genPacketArrivalEvents()
         
     def genPacketArrivalEvents(self):
@@ -30,14 +31,6 @@ class Node:
             # add packet to queue
             self.queue.append(Packet(currentTime))
 
-    # Checks if next packet is during a transmission. If next packet
-    # Arrives before the sender's first bit arrives, bus appears to be idle
-    def checkIfBusy(self, firstBitArrivalTime, lastBitArrivaltime):
-        if (self.queue and (self.getFirstPacketTimestamp() >= firstBitArrivalTime) and 
-            (self.getFirstPacketTimestamp() <= lastBitArrivaltime)):
-            return True
-        return False
-
     # If packet arrival < arrival of transmitted first bit, bus appears to be idle
     def checkCollision(self, firstBitArrivalTime):
         if self.queue and (self.getFirstPacketTimestamp() < firstBitArrivalTime):
@@ -52,6 +45,15 @@ class Node:
             # Each node waits backoff time. Means we start waiting from our first packet time
             newArrivalTime = self.getFirstPacketTimestamp() + self.genExponentialBackoffTime()
             self.bufferPackets(0, newArrivalTime)
+
+    def waitExponentialBackoffMediumSensing(self, lowerLimit, upperLimit):
+        if self.getFirstPacketTimestamp >= lowerLimit and self.getFirstPacketTimestamp <= upperLimit:
+            self.collision_counter_medium += 1
+            if self.collision_counter_medium > COLLISION_LIMIT:
+                self.collision_counter_medium = 0
+            else:
+                newArrivalTime = self.getFirstPacketTimestamp() + self.genExponentialBackoffTime()
+                self.bufferPackets(0, newArrivalTime)
 
     # Pushes packet timestamps to an upper limit given a range
     def bufferPackets(self, lowerLimit, upperLimit):
@@ -70,7 +72,7 @@ class Node:
 
     def removeFirstPacket(self):
         self.queue.popleft()
-        self.collision_counter = 0;
+        self.collision_counter = 0
 
     def getFirstPacketTimestamp(self):
         if self.queue:

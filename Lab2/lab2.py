@@ -2,15 +2,17 @@ import numpy as np
 import time
 
 from PersistentCSMASimulator import PersistentCSMASimulator
+from NonpersistentCSMASimulator import NonpersistentCSMASimulator
 from ExponentialRandomVariableGenerator import ExponentialRandomVariableGenerator
 
 def question_1():
     # for A in [7, 10, 20]:
     for N in [20, 40, 60, 80, 100]:
-        simulator = PersistentCSMASimulator(N, 12).run()
+        simulator = PersistentCSMASimulator(N, 5).run()
 
 def question_2():
-    return
+    for N in [20, 40, 60, 80, 100]:
+        simulator = NonpersistentCSMASimulator(N, 5).run()
 
 # main
 question_number = raw_input("Enter Question Number [1, 2] ")

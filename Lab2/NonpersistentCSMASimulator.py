@@ -11,7 +11,7 @@ DISTANCE_BETWEEN_NODES = 10
 PROPAGATION_SPEED = (2/3) * 300000000
 UNIT_PROPAGATION_DELAY = DISTANCE_BETWEEN_NODES / PROPAGATION_SPEED
 
-class PersistentCSMASimulator:
+class NonpersistentCSMASimulator:
     def __init__(self, numNodes, avgPacketArrivalRate):
         self.nodes = []
 
@@ -32,12 +32,15 @@ class PersistentCSMASimulator:
             self.nodes.append(Node(i, self.avgPacketArrivalRate, SIMULATION_TIME))
 
     def bufferAllPacketsForBusy(self, currentTime, txNode):
+        # We know for a fact the transmisison will succeed. The bus will be in use
+        # for worst case, transmitting to the farthest node. Nodes should be
+        # Buffered for the worst case to avoid collision
+        maxOffset = abs(self.numNodes - txNode.getNodePosition())
+        propagationDelay = maxOffset * UNIT_PROPAGATION_DELAY
         for node in self.nodes:
-            offset = abs(node.getNodePosition() - txNode.getNodePosition())
-            propagationDelay = offset * UNIT_PROPAGATION_DELAY
             firstBitArrivalTime = currentTime + propagationDelay
             lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
-            node.bufferPackets(firstBitArrivalTime, lastBitArrivalTime)
+            node.waitExponentialBackoffMediumSensing(firstBitArrivalTime, lastBitArrivalTime)
 
     def processPackets(self):
         while True:
@@ -73,8 +76,6 @@ class PersistentCSMASimulator:
             else:
                 self.successfullyTransmittedPackets += 1
                 txNode.removeFirstPacket()
-                # We know for a fact the transmisison will succeed.
-                # Tell all nodes that the bus is busy by buffering arrival times
                 self.bufferAllPacketsForBusy(currentTime, txNode)
 
     def printResults(self):
