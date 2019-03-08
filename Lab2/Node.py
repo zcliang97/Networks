@@ -1,3 +1,4 @@
+from __future__ import division
 from ExponentialRandomVariableGenerator import ExponentialRandomVariableGenerator
 from Packet import Packet
 from collections import deque
@@ -13,8 +14,6 @@ class Node:
         self.arrivalTimeLambda = arrivalTimeLambda
         self.simulationTime = simulationTime
         self.collision_counter = 0
-        self.generated_packets = 0
-        self.packets_dropped = 0
         self.genPacketArrivalEvents()
         
     def genPacketArrivalEvents(self):
@@ -30,7 +29,6 @@ class Node:
 
             # add packet to queue
             self.queue.append(Packet(currentTime))
-            self.generated_packets += 1
 
     # Checks if next packet is during a transmission. If next packet
     # Arrives before the sender's first bit arrives, bus appears to be idle
@@ -47,12 +45,8 @@ class Node:
         return False
 
     def waitExponentialBackoff(self):
-        if not self.queue:
-            return
-
         self.collision_counter += 1
         if self.collision_counter > COLLISION_LIMIT:
-            self.packets_dropped += 1
             self.removeFirstPacket()
         else: 
             # Each node waits backoff time. Means we start waiting from our first packet time
@@ -71,7 +65,7 @@ class Node:
         # generate a random number between 0 and 2^i-1
         R = random.randint(0, (2**self.collision_counter) - 1)
         # random number * 512 bit-time
-        backoff = R * 512 * (1 / TRANSMISSION_RATE)
+        backoff = R * 512 * (1.0 / TRANSMISSION_RATE)
         return backoff
 
     def removeFirstPacket(self):

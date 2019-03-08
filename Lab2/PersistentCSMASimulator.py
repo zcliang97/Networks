@@ -31,8 +31,15 @@ class PersistentCSMASimulator:
         for i in range(self.numNodes):
             self.nodes.append(Node(i, self.avgPacketArrivalRate, SIMULATION_TIME))
 
+    def bufferAllPacketsForBusy(self, currentTime, txNode):
+        for node in self.nodes:
+            offset = abs(rxNode.getNodePosition() - txNode.getNodePosition())
+            propagationDelay = offset * UNIT_PROPAGATION_DELAY;
+            firstBitArrivalTime = currentTime + propagationDelay
+            lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
+            node.bufferPackets(firstBitArrivalTime, lastBitArrivalTime)
+
     def processPackets(self):
-        currentTime = 0
         while True:
             # get the sender node which has the smallest packet arrival time
             txNode = min(self.nodes, key=lambda node: node.getFirstPacketTimestamp())
@@ -42,6 +49,7 @@ class PersistentCSMASimulator:
             # update the currentTime
             currentTime = txNode.getFirstPacketTimestamp()
 
+            # A packet is trying to be sent
             self.transmittedPackets += 1
 
             # For each node, calculate when the packet arrives + check collision
@@ -49,15 +57,13 @@ class PersistentCSMASimulator:
             for rxNode in self.nodes:
                 offset = abs(rxNode.getNodePosition() - txNode.getNodePosition())
                 if (offset == 0):
-                    continue
+                    continue;
                 
-                firstBitArrivalTime = currentTime + (offset * UNIT_PROPAGATION_DELAY)
+                propagationDelay = offset * UNIT_PROPAGATION_DELAY;
+                firstBitArrivalTime = currentTime + propagationDelay
                 lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
 
-                # Carrier Sensing and if not busy check for collisions
-                if rxNode.checkIfBusy(firstBitArrivalTime, lastBitArrivalTime):
-                    rxNode.bufferPackets(firstBitArrivalTime, lastBitArrivalTime)
-                elif rxNode.checkCollision(firstBitArrivalTime):
+                if rxNode.checkCollision(firstBitArrivalTime):
                     rxNode.waitExponentialBackoff()
                     self.transmittedPackets += 1
                     transmissionSuccess = False
@@ -65,22 +71,16 @@ class PersistentCSMASimulator:
             if not transmissionSuccess:
                 txNode.waitExponentialBackoff()
             else:
-                # self.transmittedPackets += 1 <- This gave good numbers. But doesnt make sense in code
                 self.successfullyTransmittedPackets += 1
                 txNode.removeFirstPacket()
-
-    def getNumPacketsDropped(self):
-        return sum(node.packets_dropped for node in self.nodes)
-
-    def getTotalNumPackets(self):
-        return sum(node.generated_packets for node in self.nodes)
+                # We know for a fact the transmisison will succeed.
+                # Tell all nodes that the bus is busy by buffering arrival times
+                self.bufferAllPacketsForBusy(currentTime, txNode)
 
     def printResults(self):
         print("================ RESULTS ================")
         print("Arrival Rate: %f, NumNodes: %f", self.avgPacketArrivalRate, self.numNodes)
         print("SuccessFully Transmitted Packets: {}".format(self.successfullyTransmittedPackets))
-        print("Total Packets Dropped: {}".format(self.getNumPacketsDropped()))
-        print("Total Generated Packets: {}".format(self.getTotalNumPackets()))
         print("Total Transmitted Packets: {}".format(self.transmittedPackets))
         print("Efficiency of CSMA/CD: {}".format((self.successfullyTransmittedPackets / self.transmittedPackets)))
         print("Throughput of CSMA/CD: {} Mbps".format(((self.successfullyTransmittedPackets * PACKET_LENGTH / 1000000) / SIMULATION_TIME)))
