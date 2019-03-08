@@ -80,7 +80,7 @@ class PersistentCSMASimulator:
 
     def printResults(self):
         print("================ RESULTS ================")
-        print("Arrival Rate: %f, NumNodes: %f", self.avgPacketArrivalRate, self.numNodes)
+        print("Arrival Rate: {}, NumNodes: {}".format(self.avgPacketArrivalRate, self.numNodes))
         print("SuccessFully Transmitted Packets: {}".format(self.successfullyTransmittedPackets))
         print("Total Transmitted Packets: {}".format(self.transmittedPackets))
         print("Efficiency of CSMA/CD: {}".format((self.successfullyTransmittedPackets / self.transmittedPackets)))
