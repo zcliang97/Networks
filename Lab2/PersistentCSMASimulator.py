@@ -32,9 +32,12 @@ class PersistentCSMASimulator:
             self.nodes.append(Node(i, self.avgPacketArrivalRate, SIMULATION_TIME))
 
     def bufferAllPacketsForBusy(self, currentTime, txNode):
+        # We know for a fact the transmisison will succeed. The bus will be in use
+        # for worst case, transmitting to the farthest node. Nodes should be
+        # Buffered for the worst case to avoid collision
+        maxOffset = abs(self.numNodes - txNode.getNodePosition())
+        propagationDelay = maxOffset * UNIT_PROPAGATION_DELAY;
         for node in self.nodes:
-            offset = abs(node.getNodePosition() - txNode.getNodePosition())
-            propagationDelay = offset * UNIT_PROPAGATION_DELAY;
             firstBitArrivalTime = currentTime + propagationDelay
             lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
             node.bufferPackets(firstBitArrivalTime, lastBitArrivalTime)
@@ -73,9 +76,7 @@ class PersistentCSMASimulator:
             else:
                 self.successfullyTransmittedPackets += 1
                 txNode.removeFirstPacket()
-                # We know for a fact the transmisison will succeed.
-                # Tell all nodes that the bus is busy by buffering arrival times
-                self.bufferAllPacketsForBusy(currentTime, txNode)
+                self.bufferAllPacketsForBusy()
 
     def printResults(self):
         print("================ RESULTS ================")
