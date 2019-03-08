@@ -1,6 +1,5 @@
 from ExponentialRandomVariableGenerator import ExponentialRandomVariableGenerator
 from Packet import Packet
-from Event import Event
 from collections import deque
 import random
 
@@ -14,6 +13,8 @@ class Node:
         self.arrivalTimeLambda = arrivalTimeLambda
         self.simulationTime = simulationTime
         self.collision_counter = 0
+        self.generated_packets = 0
+        self.packets_dropped = 0
         self.genPacketArrivalEvents()
         
     def genPacketArrivalEvents(self):
@@ -27,44 +28,48 @@ class Node:
             interArrivalTime = arrivalTimeGenerator.genValue()
             currentTime += interArrivalTime
 
-            # add arrival event to queue
-            self.queue.append(Event("Arrival", currentTime))
+            # add packet to queue
+            self.queue.append(Packet(currentTime))
+            self.generated_packets += 1
 
-    def checkCollision(self, firstBitArrivalTime):
-        if self.queue and (self.queue[0].timestamp < firstBitArrivalTime):
+    # Checks if next packet is during a transmission. If next packet
+    # Arrives before the sender's first bit arrives, bus appears to be idle
+    def checkIfBusy(self, firstBitArrivalTime, lastBitArrivaltime):
+        if (self.queue and (self.getFirstPacketTimestamp() >= firstBitArrivalTime) and 
+            (self.getFirstPacketTimestamp() <= lastBitArrivaltime)):
             return True
         return False
 
-    def waitExponentialBackoff(self, collisionTime):
+    # If packet arrival < arrival of transmitted first bit, bus appears to be idle
+    def checkCollision(self, firstBitArrivalTime):
+        if self.queue and (self.getFirstPacketTimestamp() < firstBitArrivalTime):
+            return True
+        return False
+
+    def waitExponentialBackoff(self):
         if not self.queue:
             return
 
         self.collision_counter += 1
         if self.collision_counter > COLLISION_LIMIT:
-            # print("Collision Counter exceeded Limit")
+            self.packets_dropped += 1
             self.removeFirstPacket()
         else: 
-            # Start backoff when collision occurs. Collison occurs when first bit arrives
-            # and all nodes are notified at the same time
-            newArrivalTime = collisionTime + self.genExponentialBackoffTime()
-            for packet in self.queue:
-                if packet.timestamp > newArrivalTime:
-                    break
-                elif packet.timestamp <= newArrivalTime: 
-                    packet.timestamp = newArrivalTime
+            # Each node waits backoff time. Means we start waiting from our first packet time
+            newArrivalTime = self.getFirstPacketTimestamp() + self.genExponentialBackoffTime()
+            self.bufferPackets(0, newArrivalTime)
 
-    def processNoCollision(self, firstBitArrivalTime, lastBitArrivalTime):
+    # Pushes packet timestamps to an upper limit given a range
+    def bufferPackets(self, lowerLimit, upperLimit):
         for packet in self.queue:
-            if packet.timestamp > lastBitArrivalTime:
+            if packet.timestamp >= lowerLimit and packet.timestamp <= upperLimit:
+                packet.timestamp = upperLimit
+            elif packet.timestamp > upperLimit:
                 break
-            elif packet.timestamp < firstBitArrivalTime:
-                raise Exception('There should not be any prev transmitted nodes when no collisons occur')
-            else:
-                packet.timestamp = lastBitArrivalTime
 
     def genExponentialBackoffTime(self):
         # generate a random number between 0 and 2^i-1
-        R = random.randint(0, 2**self.collision_counter)
+        R = random.randint(0, (2**self.collision_counter) - 1)
         # random number * 512 bit-time
         backoff = R * 512 * (1 / TRANSMISSION_RATE)
         return backoff

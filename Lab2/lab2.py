@@ -1,16 +1,16 @@
 import numpy as np
 import time
 
-from DiscreteEventSimulator import DiscreteEventSimulator
+from PersistentCSMASimulator import PersistentCSMASimulator
 from ExponentialRandomVariableGenerator import ExponentialRandomVariableGenerator
 
 def question_1():
     # for A in [7, 10, 20]:
     for N in [20, 40, 60, 80, 100]:
-        simulator = DiscreteEventSimulator(N, 5).run()
+        simulator = PersistentCSMASimulator(N, 5).run()
 
 def question_2():
-    simulator = DiscreteEventSimulator(4, 1.0).run()
+    return
 
 # main
 question_number = raw_input("Enter Question Number [1, 2] ")
