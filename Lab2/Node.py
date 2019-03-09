@@ -33,9 +33,7 @@ class Node:
 
     # If packet arrival < arrival of transmitted first bit, bus appears to be idle
     def checkCollision(self, firstBitArrivalTime):
-        if self.queue and (self.getFirstPacketTimestamp() < firstBitArrivalTime):
-            return True
-        return False
+        return self.queue and (self.getFirstPacketTimestamp() <= firstBitArrivalTime)
 
     def waitExponentialBackoff(self):
         self.collision_counter += 1
