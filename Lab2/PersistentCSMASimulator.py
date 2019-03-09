@@ -31,18 +31,6 @@ class PersistentCSMASimulator:
         for i in range(self.numNodes):
             self.nodes.append(Node(i, self.avgPacketArrivalRate, SIMULATION_TIME))
 
-    def bufferAllPacketsForBusy(self, currentTime, txNode):
-        # We know for a fact the transmisison will succeed. The bus will be in use
-        # for worst case, transmitting to the farthest node. Nodes should be
-        # Buffered for the worst case to avoid collision
-        for node in self.nodes:
-            offset = abs(node.getNodePosition() - txNode.getNodePosition())
-            propagationDelay = offset * UNIT_PROPAGATION_DELAY;
-            firstBitArrivalTime = currentTime + propagationDelay
-            lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
-            if node.checkIfBusy(firstBitArrivalTime, lastBitArrivalTime):
-                node.bufferPackets(firstBitArrivalTime, lastBitArrivalTime)
-
     def processPackets(self):
         while True:
             # get the sender node which has the smallest packet arrival time
@@ -67,7 +55,9 @@ class PersistentCSMASimulator:
                 firstBitArrivalTime = currentTime + propagationDelay
                 lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
 
-                if rxNode.checkCollision(firstBitArrivalTime):
+                if rxNode.checkIfBusy(firstBitArrivalTime, lastBitArrivalTime):
+                    rxNode.bufferPackets(firstBitArrivalTime, lastBitArrivalTime)
+                elif rxNode.checkCollision(firstBitArrivalTime):
                     rxNode.waitExponentialBackoff()
                     self.transmittedPackets += 1
                     transmissionSuccess = False
@@ -76,7 +66,6 @@ class PersistentCSMASimulator:
                 txNode.waitExponentialBackoff()
             else:
                 self.successfullyTransmittedPackets += 1
-                self.bufferAllPacketsForBusy(currentTime, txNode)
                 txNode.removeFirstPacket()
 
     def printResults(self):
