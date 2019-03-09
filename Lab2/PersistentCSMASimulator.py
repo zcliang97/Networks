@@ -31,15 +31,26 @@ class PersistentCSMASimulator:
         for i in range(self.numNodes):
             self.nodes.append(Node(i, self.avgPacketArrivalRate, SIMULATION_TIME))
 
+    def bufferAllPacketsForBusy(self, currentTime, txNode):
+        maxOffset = abs((self.numNodes - 1) - txNode.getNodePosition())
+        maxPropagationDelay = maxOffset * UNIT_PROPAGATION_DELAY;
+        maxFirstBitArrivalTime = currentTime + maxPropagationDelay
+        maxLastBitArrivalTime = maxFirstBitArrivalTime + TRANSMISSION_DELAY        
+        for node in self.nodes:
+            offset = abs(node.getNodePosition() - txNode.getNodePosition())
+            propagationDelay = offset * UNIT_PROPAGATION_DELAY;
+            firstBitArrivalTime = currentTime + propagationDelay
+            node.bufferPackets(firstBitArrivalTime, maxLastBitArrivalTime)
+
     def processPackets(self):
         while True:
             # get the sender node which has the smallest packet arrival time
             txNode = min(self.nodes, key=lambda node: node.getFirstPacketTimestamp())
-            if not txNode.queue:
-                break
 
             # update the currentTime
             currentTime = txNode.getFirstPacketTimestamp()
+            if currentTime > SIMULATION_TIME:
+                break
 
             # A packet is trying to be sent
             self.transmittedPackets += 1
@@ -55,17 +66,16 @@ class PersistentCSMASimulator:
                 firstBitArrivalTime = currentTime + propagationDelay
                 lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
 
-                if rxNode.checkIfBusy(firstBitArrivalTime, lastBitArrivalTime):
-                    rxNode.bufferPackets(firstBitArrivalTime, lastBitArrivalTime)
-                elif rxNode.checkCollision(firstBitArrivalTime):
+                if rxNode.checkCollision(firstBitArrivalTime):
                     rxNode.waitExponentialBackoff()
                     self.transmittedPackets += 1
-                    transmissionSuccess = False
+                    transmissionSuccess = False                
 
             if not transmissionSuccess:
                 txNode.waitExponentialBackoff()
             else:
                 self.successfullyTransmittedPackets += 1
+                self.bufferAllPacketsForBusy(currentTime, txNode)
                 txNode.removeFirstPacket()
 
     def printResults(self):
