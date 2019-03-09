@@ -31,9 +31,14 @@ class Node:
             # add packet to queue
             self.queue.append(Packet(currentTime))
 
+    # Checks if next packet is during a transmission. If next packet
+    # Arrives before the sender's first bit arrives, bus appears to be idle
+    def checkIfBusy(self, firstBitArrivalTime, lastBitArrivaltime):
+        return firstBitArrivalTime < self.getFirstPacketTimestamp() and self.getFirstPacketTimestamp() < lastBitArrivaltime
+
     # If packet arrival < arrival of transmitted first bit, bus appears to be idle
     def checkCollision(self, firstBitArrivalTime):
-        return self.queue and (self.getFirstPacketTimestamp() <= firstBitArrivalTime)
+        return self.getFirstPacketTimestamp() <= firstBitArrivalTime
 
     def waitExponentialBackoff(self):
         self.collision_counter += 1

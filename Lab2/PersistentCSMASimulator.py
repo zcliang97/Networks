@@ -69,7 +69,7 @@ class PersistentCSMASimulator:
                 if rxNode.checkCollision(firstBitArrivalTime):
                     rxNode.waitExponentialBackoff()
                     self.transmittedPackets += 1
-                    transmissionSuccess = False
+                    transmissionSuccess = False                
 
             if not transmissionSuccess:
                 txNode.waitExponentialBackoff()
