@@ -35,12 +35,13 @@ class PersistentCSMASimulator:
         # We know for a fact the transmisison will succeed. The bus will be in use
         # for worst case, transmitting to the farthest node. Nodes should be
         # Buffered for the worst case to avoid collision
-        maxOffset = abs(self.numNodes - txNode.getNodePosition())
-        propagationDelay = maxOffset * UNIT_PROPAGATION_DELAY;
         for node in self.nodes:
+            offset = abs(node.getNodePosition() - txNode.getNodePosition())
+            propagationDelay = offset * UNIT_PROPAGATION_DELAY;
             firstBitArrivalTime = currentTime + propagationDelay
             lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
-            node.bufferPackets(firstBitArrivalTime, lastBitArrivalTime)
+            if node.checkIfBusy(firstBitArrivalTime, lastBitArrivalTime):
+                node.bufferPackets(firstBitArrivalTime, lastBitArrivalTime)
 
     def processPackets(self):
         while True:
