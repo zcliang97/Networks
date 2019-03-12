@@ -82,3 +82,4 @@ class NonpersistentCSMASimulator:
         print("Total Transmitted Packets: {}".format(self.transmittedPackets))
         print("Efficiency of CSMA/CD: {}".format((self.successfullyTransmittedPackets / self.transmittedPackets)))
         print("Throughput of CSMA/CD: {} Mbps".format(((self.successfullyTransmittedPackets * PACKET_LENGTH / 1000000) / SIMULATION_TIME)))
+        
