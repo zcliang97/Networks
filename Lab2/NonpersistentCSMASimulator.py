@@ -38,9 +38,11 @@ class NonpersistentCSMASimulator:
         maxLastBitArrivalTime = maxFirstBitArrivalTime + TRANSMISSION_DELAY        
         for node in self.nodes:
             offset = abs(node.getNodePosition() - txNode.getNodePosition())
+            if offset == 0: continue
             propagationDelay = offset * UNIT_PROPAGATION_DELAY
             firstBitArrivalTime = currentTime + propagationDelay
-            node.waitExponentialBackoffMediumSensing(firstBitArrivalTime, maxLastBitArrivalTime)
+            lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
+            node.waitExponentialBackoffMediumSensing(firstBitArrivalTime, lastBitArrivalTime)
 
     def processPackets(self):
         while True:

@@ -50,12 +50,13 @@ class Node:
             self.bufferPackets(0, newArrivalTime)
 
     def waitExponentialBackoffMediumSensing(self, lowerLimit, upperLimit):
-        if self.getFirstPacketTimestamp >= lowerLimit and self.getFirstPacketTimestamp <= upperLimit:
-            self.collision_counter_medium += 1
+        self.collision_counter_medium += 1
+        if self.getFirstPacketTimestamp() >= lowerLimit and self.getFirstPacketTimestamp() <= upperLimit:
+            
             if self.collision_counter_medium > COLLISION_LIMIT:
-                self.collision_counter_medium = 0
+                self.removeFirstPacketMediumSensing()
             else:
-                newArrivalTime = self.getFirstPacketTimestamp() + self.genExponentialBackoffTime()
+                newArrivalTime = self.getFirstPacketTimestamp() + self.genExponentialBackoffTimeMediumSensing()
                 self.bufferPackets(0, newArrivalTime)
 
     # Pushes packet timestamps to an upper limit given a range
@@ -73,9 +74,20 @@ class Node:
         backoff = R * 512 * (1.0 / TRANSMISSION_RATE)
         return backoff
 
+    def genExponentialBackoffTimeMediumSensing(self):
+        # generate a random number between 0 and 2^i-1
+        R = random.randint(0, (2**self.collision_counter_medium) - 1)
+        # random number * 512 bit-time
+        backoff = R * 512 * (1.0 / TRANSMISSION_RATE)
+        return backoff
+
     def removeFirstPacket(self):
         self.queue.popleft()
         self.collision_counter = 0
+
+    def removeFirstPacketMediumSensing(self):
+        self.queue.popleft()
+        self.collision_counter_medium = 0
 
     def getFirstPacketTimestamp(self):
         if self.queue:
