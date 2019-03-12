@@ -12,7 +12,7 @@ def question_1():
 
 def question_2():
     # for A in [7, 10, 20]:
-    for N in [40, 60, 80, 100]:
+    for N in [20, 40, 60, 80, 100]:
         simulator = NonpersistentCSMASimulator(N, 20).run()
 
 # main

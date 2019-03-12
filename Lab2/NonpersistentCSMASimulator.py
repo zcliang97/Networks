@@ -38,7 +38,6 @@ class NonpersistentCSMASimulator:
         maxLastBitArrivalTime = maxFirstBitArrivalTime + TRANSMISSION_DELAY        
         for node in self.nodes:
             offset = abs(node.getNodePosition() - txNode.getNodePosition())
-            if offset == 0: continue
             propagationDelay = offset * UNIT_PROPAGATION_DELAY
             firstBitArrivalTime = currentTime + propagationDelay
             lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY

@@ -52,12 +52,15 @@ class Node:
 
     def waitExponentialBackoffMediumSensing(self, lowerLimit, upperLimit):
         if self.getFirstPacketTimestamp() >= lowerLimit and self.getFirstPacketTimestamp() <= upperLimit:
-            self.collision_counter_medium += 1
-            if self.collision_counter_medium > COLLISION_LIMIT:
-                self.removeFirstPacketMediumSensing()
-            else:
-                newArrivalTime = self.getFirstPacketTimestamp() + self.genExponentialBackoffTimeMediumSensing()
-                self.bufferPackets(0, newArrivalTime)
+            newArrivalTime = self.getFirstPacketTimestamp()
+            while newArrivalTime < upperLimit:
+                self.collision_counter_medium += 1
+                if self.collision_counter_medium > COLLISION_LIMIT:
+                    self.removeFirstPacketMediumSensing()
+                    return
+                
+                newArrivalTime += self.genExponentialBackoffTimeMediumSensing()
+            self.bufferPackets(0, newArrivalTime)
 
     # Pushes packet timestamps to an upper limit given a range
     def bufferPackets(self, lowerLimit, upperLimit):
@@ -88,7 +91,6 @@ class Node:
 
     def removeFirstPacketMediumSensing(self):
         self.queue.popleft()
-        self.collision_counter = 0
         self.collision_counter_medium = 0
 
     def getFirstPacketTimestamp(self):
