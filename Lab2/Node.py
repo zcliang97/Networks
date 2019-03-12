@@ -42,6 +42,7 @@ class Node:
 
     def waitExponentialBackoff(self):
         self.collision_counter += 1
+        self.collision_counter_medium = 0
         if self.collision_counter > COLLISION_LIMIT:
             self.removeFirstPacket()
         else: 
@@ -50,9 +51,8 @@ class Node:
             self.bufferPackets(0, newArrivalTime)
 
     def waitExponentialBackoffMediumSensing(self, lowerLimit, upperLimit):
-        self.collision_counter_medium += 1
         if self.getFirstPacketTimestamp() >= lowerLimit and self.getFirstPacketTimestamp() <= upperLimit:
-            
+            self.collision_counter_medium += 1
             if self.collision_counter_medium > COLLISION_LIMIT:
                 self.removeFirstPacketMediumSensing()
             else:
@@ -84,9 +84,11 @@ class Node:
     def removeFirstPacket(self):
         self.queue.popleft()
         self.collision_counter = 0
+        self.collision_counter_medium = 0
 
     def removeFirstPacketMediumSensing(self):
         self.queue.popleft()
+        self.collision_counter = 0
         self.collision_counter_medium = 0
 
     def getFirstPacketTimestamp(self):
