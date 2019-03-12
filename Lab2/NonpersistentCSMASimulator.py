@@ -32,10 +32,6 @@ class NonpersistentCSMASimulator:
             self.nodes.append(Node(i, self.avgPacketArrivalRate, SIMULATION_TIME))
 
     def bufferAllPacketsForBusy(self, currentTime, txNode):
-        maxOffset = abs((self.numNodes - 1) - txNode.getNodePosition())
-        maxPropagationDelay = maxOffset * UNIT_PROPAGATION_DELAY
-        maxFirstBitArrivalTime = currentTime + maxPropagationDelay
-        maxLastBitArrivalTime = maxFirstBitArrivalTime + TRANSMISSION_DELAY        
         for node in self.nodes:
             offset = abs(node.getNodePosition() - txNode.getNodePosition())
             propagationDelay = offset * UNIT_PROPAGATION_DELAY
