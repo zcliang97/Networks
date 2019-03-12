@@ -52,11 +52,13 @@ class Node:
     def waitExponentialBackoffMediumSensing(self, lowerLimit, upperLimit):
         if self.getFirstPacketTimestamp >= lowerLimit and self.getFirstPacketTimestamp <= upperLimit:
             self.collision_counter_medium += 1
-            if self.collision_counter_medium > COLLISION_LIMIT:
-                self.collision_counter_medium = 0
-            else:
-                newArrivalTime = self.getFirstPacketTimestamp() + self.genExponentialBackoffTime()
-                self.bufferPackets(0, newArrivalTime)
+            # if self.collision_counter_medium > COLLISION_LIMIT:
+            #     self.collision_counter_medium = 0
+            # else:
+            #     newArrivalTime = self.getFirstPacketTimestamp() + self.genExponentialBackoffTime()
+            #     self.bufferPackets(0, newArrivalTime)
+            newArrivalTime = self.getFirstPacketTimestamp() + self.genExponentialBackoffTime()
+            self.bufferPackets(0, newArrivalTime)
 
     # Pushes packet timestamps to an upper limit given a range
     def bufferPackets(self, lowerLimit, upperLimit):
