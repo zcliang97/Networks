@@ -53,6 +53,8 @@ class Node:
     def waitExponentialBackoffMediumSensing(self, lowerLimit, upperLimit):
         if self.getFirstPacketTimestamp() >= lowerLimit and self.getFirstPacketTimestamp() <= upperLimit:
             newArrivalTime = self.getFirstPacketTimestamp()
+
+            # Add a backoff for each time the node sees the bus being busy
             while newArrivalTime < upperLimit:
                 self.collision_counter_medium += 1
                 if self.collision_counter_medium > COLLISION_LIMIT:
@@ -60,6 +62,8 @@ class Node:
                     return
                 
                 newArrivalTime += self.genExponentialBackoffTimeMediumSensing()
+
+            # Buffer arrival times to when busy becomes free
             self.bufferPackets(0, newArrivalTime)
 
     # Pushes packet timestamps to an upper limit given a range
