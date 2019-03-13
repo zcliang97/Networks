@@ -37,7 +37,7 @@ class NonpersistentCSMASimulator:
             propagationDelay = offset * UNIT_PROPAGATION_DELAY
             firstBitArrivalTime = currentTime + propagationDelay
             lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
-            self.transmittedPackets += node.getDroppedPackets(firstBitArrivalTime, lastBitArrivalTime):
+            self.transmittedPackets += node.getDroppedPackets(firstBitArrivalTime, lastBitArrivalTime)
 
     def processPackets(self):
         while True:

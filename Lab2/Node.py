@@ -52,23 +52,23 @@ class Node:
 
     # For medium sense, apply exponential backoff, drop packets if exceeds limit, return the number of dropped packets
     def getDroppedPackets(self, lowerLimit, upperLimit):
+        droppedPackets = 0
         if self.getFirstPacketTimestamp() >= lowerLimit and self.getFirstPacketTimestamp() <= upperLimit:
             newArrivalTime = self.getFirstPacketTimestamp()
 
-            droppedPackets = 0
             # Add a backoff for each time the node sees the bus being busy
             while newArrivalTime < upperLimit:
                 self.collision_counter_medium += 1
                 if self.collision_counter_medium > COLLISION_LIMIT:
                     self.removeFirstPacketMediumSensing()
-                    newArrivalTime = self.getFirstPacketArrivalTime()
+                    newArrivalTime = self.getFirstPacketTimestamp()
                     droppedPackets += 1
                 newArrivalTime += self.genExponentialBackoffTimeMediumSensing()
 
             # Buffer arrival times to when busy becomes free
             self.bufferPackets(0, newArrivalTime)
             # return false is no packets were dropped
-            return droppedPackets
+        return droppedPackets
 
     # Pushes packet timestamps to an upper limit given a range
     def bufferPackets(self, lowerLimit, upperLimit):
