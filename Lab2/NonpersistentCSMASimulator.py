@@ -32,16 +32,13 @@ class NonpersistentCSMASimulator:
             self.nodes.append(Node(i, self.avgPacketArrivalRate, SIMULATION_TIME))
 
     def bufferAllPacketsForBusy(self, currentTime, txNode):
-        maxOffset = abs((self.numNodes - 1) - txNode.getNodePosition())
-        maxPropagationDelay = maxOffset * UNIT_PROPAGATION_DELAY
-        maxFirstBitArrivalTime = currentTime + maxPropagationDelay
-        maxLastBitArrivalTime = maxFirstBitArrivalTime + TRANSMISSION_DELAY        
         for node in self.nodes:
             offset = abs(node.getNodePosition() - txNode.getNodePosition())
             propagationDelay = offset * UNIT_PROPAGATION_DELAY
             firstBitArrivalTime = currentTime + propagationDelay
             lastBitArrivalTime = firstBitArrivalTime + TRANSMISSION_DELAY
-            node.waitExponentialBackoffMediumSensing(firstBitArrivalTime, lastBitArrivalTime)
+            if node.waitExponentialBackoffMediumSensing(firstBitArrivalTime, lastBitArrivalTime):
+                self.transmittedPackets += 1
 
     def processPackets(self):
         while True:
@@ -86,3 +83,4 @@ class NonpersistentCSMASimulator:
         print("Total Transmitted Packets: {}".format(self.transmittedPackets))
         print("Efficiency of CSMA/CD: {}".format((self.successfullyTransmittedPackets / self.transmittedPackets)))
         print("Throughput of CSMA/CD: {} Mbps".format(((self.successfullyTransmittedPackets * PACKET_LENGTH / 1000000) / SIMULATION_TIME)))
+        
