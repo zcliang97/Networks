@@ -1,7 +1,7 @@
 from __future__ import division
 from Node import Node
 
-SIMULATION_TIME = 200 # 1000s
+SIMULATION_TIME = 1000 # 1000s
 
 TRANSMISSION_RATE = 1000000 # 1 Mbps
 PACKET_LENGTH = 1500 # assume all packets are the same length
